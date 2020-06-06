@@ -1,9 +1,4 @@
-const gridSize = [3, 4];
-let holePos = { x: gridSize[0] - 1, y: gridSize[1] - 1 };
-const panelElement = document.querySelector('.panel');
-const percentageX = 100 / (gridSize[0] - 1);
-const percentageY = 100 / (gridSize[1] - 1);
-const coordinateMap = [
+let coordinateMap = [
     { x: 0, y: 0 },
     { x: 0, y: 1 },
     { x: 0, y: 2 },
@@ -17,12 +12,64 @@ const coordinateMap = [
     { x: 2, y: 2 },
     // { x: 2, y: 3 },
 ];
+let gridSize = [];
+let panelElement;
+let holePos;
 
-export function addPieces() {
+export function gameInit(panelElement, gridSize) {
+    panelElement.innerHTML = '';
+    setPanelElement(panelElement);
+    setGridSize(gridSize);
+    setHolePosition();
+    setCoordinateMap();
+
+    addPieces();
+    shuffleTiles();
+    tileClickEventBinding();
+    keydownEventBinding();
+}
+
+function setHolePosition() {
+    const pos = {
+        x: gridSize[0] - 1,
+        y: gridSize[1] - 1,
+        translate: `translate(calc(var(--tile-w-size)*${
+            gridSize[0] - 1
+        }),calc(var(--tile-h-size)*${gridSize[1] - 1}))`,
+    };
+    holePos = pos;
+}
+
+function setPanelElement(el) {
+    panelElement = el;
+}
+
+function setGridSize(size) {
+    gridSize = size;
+}
+
+function setCoordinateMap() {
+    coordinateMap = [];
+    for (let i = 0; i < gridSize[0]; i++) {
+        for (let j = 0; j < gridSize[1]; j++) {
+            coordinateMap.push({
+                x: i,
+                y: j,
+                translate: `translate(calc(var(--tile-w-size)*${i}),calc(var(--tile-h-size)*${j}))`,
+            });
+        }
+    }
+    coordinateMap.pop();
+}
+
+function addPieces() {
+    const percentageX = 100 / (gridSize[0] - 1);
+    const percentageY = 100 / (gridSize[1] - 1);
     for (let index = 0; index < gridSize[0] * gridSize[1]; index++) {
         const div = document.createElement('div');
-        const { y: rowIndex, x: colIndex } = fromTileIndexToPosition(index);
-        console.log(rowIndex, colIndex);
+        const { y, x } = fromTileIndexToPosition(index);
+        const pos = coordinateMap.find((c) => (c.x === x) & (c.y === y));
+        console.log(y, x);
 
         div.id = index;
         if (gridSize[0] * gridSize[1] - 1 !== index) {
@@ -31,15 +78,17 @@ export function addPieces() {
             div.style.backgroundImage = 'url("penguins_300x400.jpg")';
             div.style.backgroundPosition = `${xPos}% ${yPos}%`;
             div.style.backgroundSize = `${gridSize[0]}00%`;
-            div.setAttribute('data-xIndex', colIndex);
-            div.setAttribute('data-yIndex', rowIndex);
-            div.className = `tile x${colIndex} y${rowIndex}`;
+            div.setAttribute('data-xIndex', x);
+            div.setAttribute('data-yIndex', y);
+            div.style.transform = pos.translate;
+            // div.className = `tile x${x} y${y}`;
+            div.className = `tile`;
             panelElement.appendChild(div);
         }
     }
 }
 
-export function shuffleTiles() {
+function shuffleTiles() {
     let mapCor = [...coordinateMap];
 
     for (let i = panelElement.children.length - 1; i >= 0; i--) {
@@ -51,9 +100,10 @@ export function shuffleTiles() {
 
 // pos: {x,y}
 // element: HTMLElement
-export function moveTileToXY(element, pos) {
+function moveTileToXY(element, pos) {
     if (pos) {
-        element.className = `tile x${pos.x} y${pos.y}`;
+        // element.className = `tile x${pos.x} y${pos.y}`;
+        element.style.transform = pos.translate;
         element.setAttribute('data-xIndex', pos.x);
         element.setAttribute('data-yIndex', pos.y);
     }
@@ -76,28 +126,40 @@ function moveTileToHole(element) {
  * @param {*} tilePos - tile position
  * @return {positivePos: {left, right, up, down}}
  */
-export function findPositiveMove(tilePos) {
+function findPositiveMove(tilePos) {
     return {
         left: {
             ...tilePos,
             x: tilePos.x - 1 >= 0 ? tilePos.x - 1 : null,
+            translate: `translate(calc(var(--tile-w-size)*${
+                tilePos.x - 1
+            }),calc(var(--tile-h-size)*${tilePos.y}))`,
         },
         right: {
             ...tilePos,
             x: tilePos.x + 1 < gridSize[0] ? tilePos.x + 1 : null,
+            translate: `translate(calc(var(--tile-w-size)*${
+                tilePos.x + 1
+            }),calc(var(--tile-h-size)*${tilePos.y}))`,
         },
         up: {
             ...tilePos,
             y: tilePos.y - 1 >= 0 ? tilePos.y - 1 : null,
+            translate: `translate(calc(var(--tile-w-size)*${
+                tilePos.x
+            }),calc(var(--tile-h-size)*${tilePos.y - 1}))`,
         },
         down: {
             ...tilePos,
             y: tilePos.y + 1 < gridSize[1] ? tilePos.y + 1 : null,
+            translate: `translate(calc(var(--tile-w-size)*${
+                tilePos.x
+            }),calc(var(--tile-h-size)*${tilePos.y + 1}))`,
         },
     };
 }
 
-export function validateMove(targetPos) {
+function validateMove(targetPos) {
     const positiveMove = findPositiveMove(targetPos);
     return Object.values(positiveMove).find(
         (v) => JSON.stringify(v) === JSON.stringify(holePos)
@@ -113,7 +175,7 @@ function fromTileIndexToPosition(tileIndex) {
     };
 }
 
-export function swapElements(idx1, idx2) {
+function swapElements(idx1, idx2) {
     const obj1 = panelElement.children[idx1];
     const obj2 = panelElement.children[idx2];
     const temp = obj2.id;
@@ -141,7 +203,7 @@ export function swapElements(idx1, idx2) {
     }
 }
 
-export function tileClickHandler(ev) {
+function tileClickHandler(ev) {
     moveTileToHole(ev.target);
 }
 
@@ -149,10 +211,13 @@ function getPositionfromElement(element) {
     return {
         x: parseInt(element.getAttribute('data-xIndex')),
         y: parseInt(element.getAttribute('data-yIndex')),
+        translate: `translate(calc(var(--tile-w-size)*${element.getAttribute(
+            'data-xIndex'
+        )}),calc(var(--tile-h-size)*${element.getAttribute('data-yIndex')}))`,
     };
 }
 
-export function tileClickEventBinding() {
+function tileClickEventBinding() {
     document.querySelectorAll('.tile').forEach((tile) => {
         const tilePos = getPositionfromElement(tile);
         if (JSON.stringify(tilePos) !== JSON.stringify(holePos)) {
@@ -163,12 +228,11 @@ export function tileClickEventBinding() {
     });
 }
 
-export function keydownEventBinding(){
+function keydownEventBinding() {
     document.addEventListener('keydown', arrowKeyPressHandler);
 }
 
-
-export function arrowKeyPressHandler(ev) {
+function arrowKeyPressHandler(ev) {
     const positiveTargetPos = findPositiveMove(holePos);
     let targetPos;
     switch (ev.keyCode) {
@@ -190,7 +254,7 @@ export function arrowKeyPressHandler(ev) {
 
     if (targetPos) {
         const targetElement = document.querySelector(
-            `.x${targetPos.x}.y${targetPos.y}`
+            `[data-xindex="${targetPos.x}"][data-yindex="${targetPos.y}"]`
         );
         if (targetElement) {
             moveTileToHole(targetElement);
