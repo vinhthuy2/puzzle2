@@ -50,6 +50,8 @@ body {
     border: solid 1px #7db7f0;
     box-sizing: border-box;
     transition: all linear 0.07s;
+    cursor: pointer;
+    user-select: none;
 }
 
 .tile:hover {
