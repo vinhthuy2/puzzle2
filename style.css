@@ -12,6 +12,18 @@ body {
     padding: 0;
 }
 
+.option {
+    display: flex;
+    color: white;
+}
+
+.option input {
+    width: 30px;
+    text-align: center;
+    margin-left: 10px;
+    margin-right: 10px;
+}
+
 .container {
     display: flex;
     flex-direction: column;
@@ -25,7 +37,7 @@ body {
     margin-top: 20px;
     width: var(--panel-w-size);
     height: var(--panel-h-size);
-    background-color: #2778ca;
+    background-color: #13395f;
     border: solid 1px #7db7f0;
 }
 .tile {
@@ -37,7 +49,7 @@ body {
     height: var(--tile-h-size);
     border: solid 1px #7db7f0;
     box-sizing: border-box;
-    transition: all linear 0.1s;
+    transition: all linear 0.07s;
 }
 
 .tile:hover {
